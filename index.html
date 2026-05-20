@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .messages-area::-webkit-scrollbar { width: 4px; }
+        .messages-area::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-100 h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-2xl bg-white h-[80vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-slate-200">
+        <!-- Header -->
+        <div class="bg-indigo-600 p-6 text-white flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl">💬</div>
+                <div>
+                    <h1 class="font-semibold text-lg leading-tight">Asystent n8n</h1>
+                    <p class="text-xs opacity-80 flex items-center gap-1">
+                        <span class="w-2 h-2 bg-green-400 rounded-full"></span> Online
+                    </p>
+                </div>
+            </div>
+            <div class="text-[10px] bg-indigo-700 px-2 py-1 rounded-md opacity-60 font-mono" id="session-display">
+                Session: ...
+            </div>
+        </div>
+
+        <!-- Obszar wiadomości -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 messages-area bg-slate-50">
+            <!-- Pierwsza wiadomość powitalna -->
+            <div class="flex flex-col items-start">
+                <div class="bg-white border border-slate-200 text-slate-800 p-4 rounded-2xl rounded-tl-none shadow-sm max-w-[85%] text-sm">
+                    Witaj! W czym mogę Ci dzisiaj pomóc? Twoja sesja jest aktywna.
+                </div>
+            </div>
+        </div>
+
+        <!-- Input -->
+        <div class="p-6 bg-white border-t border-slate-100">
+            <div class="flex items-center gap-3">
+                <input 
+                    type="text" 
+                    id="user-input" 
+                    placeholder="Napisz coś..." 
+                    class="flex-1 bg-slate-100 border-none rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    onkeypress="if(event.key === 'Enter') sendMessage()"
+                >
+                <button 
+                    onclick="sendMessage()" 
+                    class="bg-indigo-600 text-white p-3 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sessionDisplay = document.getElementById('session-display');
+        const webhookUrl = 'https://n8n.srv1319103.hstgr.cloud/webhook/1e972992-d043-4474-861c-98ed52e3bfb4';
+
+        // Generowanie unikalnego Session ID lub pobieranie istniejącego
+        let sessionId = localStorage.getItem('n8n_chat_session_id');
+        if (!sessionId) {
+            sessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('n8n_chat_session_id', sessionId);
+        }
+        sessionDisplay.innerText = `ID: ${sessionId}`;
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Dodaj wiadomość użytkownika do UI
+            appendMessage('user', message);
+            userInput.value = '';
+            
+            // Wskaźnik pisania
+            const loadingId = appendMessage('bot', '<div class="flex gap-1"><span class="animate-bounce">.</span><span class="animate-bounce" style="animation-delay: 0.2s">.</span><span class="animate-bounce" style="animation-delay: 0.4s">.</span></div>');
+
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        sessionId: sessionId, // Parametr wymagany przez n8n do pamiętania konwersacji
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                if (!response.ok) throw new Error('Błąd serwera');
+
+                const data = await response.json();
+                removeMessage(loadingId);
+
+                // Próba wyciągnięcia tekstu z różnych formatów odpowiedzi n8n
+                const botResponse = data.output || data.message || data.text || (Array.isArray(data) ? data[0].output : "Otrzymałem wiadomość!");
+                appendMessage('bot', botResponse);
+
+            } catch (error) {
+                console.error('Błąd:', error);
+                removeMessage(loadingId);
+                appendMessage('bot', 'Wystąpił błąd połączenia z serwerem n8n.');
+            }
+        }
+
+        function appendMessage(sender, text) {
+            const msgId = 'msg-' + Date.now();
+            const wrapper = document.createElement('div');
+            wrapper.id = msgId;
+            wrapper.className = `flex flex-col ${sender === 'user' ? 'items-end' : 'items-start'}`;
+            
+            const bubbleClass = sender === 'user' 
+                ? 'bg-indigo-600 text-white rounded-tr-none shadow-md shadow-indigo-100' 
+                : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none shadow-sm';
+            
+            wrapper.innerHTML = `
+                <div class="${bubbleClass} p-4 rounded-2xl max-w-[85%] text-sm leading-relaxed">
+                    ${text}
+                </div>
+                <span class="text-[9px] text-slate-400 mt-1 uppercase font-bold tracking-wider mx-1">
+                    ${sender === 'user' ? 'Ty' : 'Asystent'}
+                </span>
+            `;
+            
+            chatMessages.appendChild(wrapper);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return msgId;
+        }
+
+        function removeMessage(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+    </script>
+</body>
+</html>
