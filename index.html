@@ -3,62 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Interface</title>
+    <title>Prosty Czat Szkoły Językowej</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .messages-area::-webkit-scrollbar { width: 4px; }
-        .messages-area::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .chat-container { height: 100vh; display: flex; flex-direction: column; max-width: 600px; margin: 0 auto; background: white; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .messages-area::-webkit-scrollbar { width: 5px; }
+        .messages-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-slate-100 h-screen flex items-center justify-center p-4">
+<body>
 
-    <div class="w-full max-w-2xl bg-white h-[80vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-slate-200">
+    <div class="chat-container">
         <!-- Header -->
-        <div class="bg-indigo-600 p-6 text-white flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl">💬</div>
-                <div>
-                    <h1 class="font-semibold text-lg leading-tight">Asystent n8n</h1>
-                    <p class="text-xs opacity-80 flex items-center gap-1">
-                        <span class="w-2 h-2 bg-green-400 rounded-full"></span> Online
-                    </p>
+        <div class="p-4 bg-blue-600 text-white flex justify-between items-center shadow-md">
+            <div>
+                <h1 class="font-bold text-lg">Czat Szkoły Językowej</h1>
+                <div class="text-[10px] opacity-80 flex items-center gap-1">
+                    <span id="status-dot" class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                    Sesja: <span id="session-id-display">Generowanie...</span>
                 </div>
             </div>
-            <div class="text-[10px] bg-indigo-700 px-2 py-1 rounded-md opacity-60 font-mono" id="session-display">
-                Session: ...
-            </div>
+            <button onclick="clearChat()" class="text-xs bg-blue-700 px-2 py-1 rounded hover:bg-blue-800 transition-colors">Wyczyść</button>
         </div>
 
         <!-- Obszar wiadomości -->
-        <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 messages-area bg-slate-50">
-            <!-- Pierwsza wiadomość powitalna -->
-            <div class="flex flex-col items-start">
-                <div class="bg-white border border-slate-200 text-slate-800 p-4 rounded-2xl rounded-tl-none shadow-sm max-w-[85%] text-sm">
-                    Witaj! W czym mogę Ci dzisiaj pomóc? Twoja sesja jest aktywna.
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 messages-area bg-slate-50">
+            <div class="flex justify-start">
+                <div class="bg-white border border-slate-200 text-slate-800 p-3 rounded-2xl rounded-tl-none shadow-sm max-w-[85%] text-sm">
+                    Dzień dobry! W czym możemy pomóc? Napisz do nas.
                 </div>
             </div>
         </div>
 
         <!-- Input -->
-        <div class="p-6 bg-white border-t border-slate-100">
-            <div class="flex items-center gap-3">
+        <div class="p-4 border-t border-slate-100 bg-white">
+            <div class="flex gap-2">
                 <input 
                     type="text" 
                     id="user-input" 
-                    placeholder="Napisz coś..." 
-                    class="flex-1 bg-slate-100 border-none rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    placeholder="Wpisz wiadomość..." 
+                    class="flex-1 border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     onkeypress="if(event.key === 'Enter') sendMessage()"
                 >
                 <button 
                     onclick="sendMessage()" 
-                    class="bg-indigo-600 text-white p-3 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95"
+                    id="send-button"
+                    class="bg-blue-600 text-white px-5 py-3 rounded-xl hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                     </svg>
                 </button>
             </div>
@@ -66,84 +61,106 @@
     </div>
 
     <script>
+        const webhookUrl = 'https://n8n.srv1319103.hstgr.cloud/webhook/1e972992-d043-4474-861c-98ed52e3bfb4';
         const chatMessages = document.getElementById('chat-messages');
         const userInput = document.getElementById('user-input');
-        const sessionDisplay = document.getElementById('session-display');
-        const webhookUrl = 'https://n8n.srv1319103.hstgr.cloud/webhook/1e972992-d043-4474-861c-98ed52e3bfb4';
+        const sendButton = document.getElementById('send-button');
+        const sessionDisplay = document.getElementById('session-id-display');
 
-        // Generowanie unikalnego Session ID lub pobieranie istniejącego
-        let sessionId = localStorage.getItem('n8n_chat_session_id');
+        // Obsługa SessionID
+        let sessionId = localStorage.getItem('school_chat_session_id');
         if (!sessionId) {
-            sessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('n8n_chat_session_id', sessionId);
+            sessionId = 'lang_' + Math.random().toString(36).substring(2, 11);
+            localStorage.setItem('school_chat_session_id', sessionId);
         }
-        sessionDisplay.innerText = `ID: ${sessionId}`;
+        sessionDisplay.innerText = sessionId;
 
         async function sendMessage() {
             const message = userInput.value.trim();
             if (!message) return;
 
-            // Dodaj wiadomość użytkownika do UI
-            appendMessage('user', message);
+            // Zablokuj input i pokaż wiadomość użytkownika
             userInput.value = '';
+            userInput.disabled = true;
+            sendButton.disabled = true;
             
-            // Wskaźnik pisania
-            const loadingId = appendMessage('bot', '<div class="flex gap-1"><span class="animate-bounce">.</span><span class="animate-bounce" style="animation-delay: 0.2s">.</span><span class="animate-bounce" style="animation-delay: 0.4s">.</span></div>');
+            appendMessage('user', message);
+            
+            // Wskaźnik ładowania
+            const loadingId = appendMessage('bot', '<div class="flex gap-1 py-1"><div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div><div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay:0.2s"></div><div class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay:0.4s"></div></div>');
 
             try {
                 const response = await fetch(webhookUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({
-                        message: message,
-                        sessionId: sessionId, // Parametr wymagany przez n8n do pamiętania konwersacji
+                        chatInput: message, 
+                        message: message,   
+                        sessionId: sessionId,
                         timestamp: new Date().toISOString()
                     })
                 });
 
-                if (!response.ok) throw new Error('Błąd serwera');
+                if (!response.ok) {
+                    throw new Error(`Błąd HTTP: ${response.status}`);
+                }
 
                 const data = await response.json();
                 removeMessage(loadingId);
 
-                // Próba wyciągnięcia tekstu z różnych formatów odpowiedzi n8n
-                const botResponse = data.output || data.message || data.text || (Array.isArray(data) ? data[0].output : "Otrzymałem wiadomość!");
-                appendMessage('bot', botResponse);
+                // Próba inteligentnego znalezienia tekstu w odpowiedzi
+                let botText = "";
+                
+                if (typeof data === 'string') {
+                    botText = data;
+                } else if (Array.isArray(data) && data.length > 0) {
+                    botText = data[0].output || data[0].message || data[0].text || JSON.stringify(data[0]);
+                } else {
+                    botText = data.output || data.message || data.text || data.response || JSON.stringify(data);
+                }
+
+                appendMessage('bot', botText);
 
             } catch (error) {
-                console.error('Błąd:', error);
+                console.error('Błąd połączenia:', error);
                 removeMessage(loadingId);
-                appendMessage('bot', 'Wystąpił błąd połączenia z serwerem n8n.');
+                appendMessage('bot', `<span class="text-red-500 font-medium">Podano błędne lub brak hasła, jeżeli nie skontaktuj się bezpośrednio z właścicielem.</span>`);
+            } finally {
+                userInput.disabled = false;
+                sendButton.disabled = false;
+                userInput.focus();
             }
         }
 
         function appendMessage(sender, text) {
-            const msgId = 'msg-' + Date.now();
-            const wrapper = document.createElement('div');
-            wrapper.id = msgId;
-            wrapper.className = `flex flex-col ${sender === 'user' ? 'items-end' : 'items-start'}`;
+            const id = 'msg-' + Date.now();
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`;
             
-            const bubbleClass = sender === 'user' 
-                ? 'bg-indigo-600 text-white rounded-tr-none shadow-md shadow-indigo-100' 
-                : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none shadow-sm';
+            const color = sender === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none';
             
-            wrapper.innerHTML = `
-                <div class="${bubbleClass} p-4 rounded-2xl max-w-[85%] text-sm leading-relaxed">
+            div.innerHTML = `
+                <div class="${color} p-3 rounded-2xl shadow-sm max-w-[85%] text-sm leading-relaxed">
                     ${text}
                 </div>
-                <span class="text-[9px] text-slate-400 mt-1 uppercase font-bold tracking-wider mx-1">
-                    ${sender === 'user' ? 'Ty' : 'Asystent'}
-                </span>
             `;
             
-            chatMessages.appendChild(wrapper);
+            chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
-            return msgId;
+            return id;
         }
 
         function removeMessage(id) {
             const el = document.getElementById(id);
             if (el) el.remove();
+        }
+
+        function clearChat() {
+            chatMessages.innerHTML = '';
+            appendMessage('bot', 'Czat został wyczyszczony. W czym mogę pomóc?');
         }
     </script>
 </body>
